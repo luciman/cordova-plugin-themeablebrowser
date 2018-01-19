@@ -243,17 +243,21 @@
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
+            float osVersion = [[[UIDevice currentDevice] systemVersion] floatValue];
             CGRect frame = [[UIScreen mainScreen] bounds];
-            if(initHidden){
+            if(initHidden && osVersion < 11){
                 frame.origin.x = -10000;
             }
             
             UIWindow *tmpWindow = [[UIWindow alloc] initWithFrame:frame];
             UIViewController *tmpController = [[UIViewController alloc] init];
+            
             [tmpWindow setRootViewController:tmpController];
             [tmpWindow setWindowLevel:UIWindowLevelNormal];
             
+            if(!initHidden || osVersion < 11){
             [tmpWindow makeKeyAndVisible];
+            }
             [tmpController presentViewController:nav animated:!noAnimate completion:nil];
         }
     });
@@ -555,12 +559,8 @@ BOOL isExiting = FALSE;
         _userAgent = userAgent;
         _prevUserAgent = prevUserAgent;
         _browserOptions = browserOptions;
-#ifdef __CORDOVA_4_0_0
-        _webViewDelegate = [[CDVWKWebViewUIDelegate alloc] initWithTitle:@"cordova"];
-        //_webViewDelegate = [[CDVUIWebViewDelegate alloc] initWithDelegate:self];
-#else
-        _webViewDelegate = [[CDVWebViewDelegate alloc] initWithDelegate:self];
-#endif
+        self.webViewUIDelegate = [[CDVInAppBrowserUIDelegate alloc] initWithTitle:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"]];
+        [self.webViewUIDelegate setViewController:self];
         
         [self createViews];
     }
@@ -588,15 +588,13 @@ BOOL isExiting = FALSE;
     
     
     self.webView = [[WKWebView alloc] initWithFrame:webViewBounds configuration:configuration];
-    CDVWKWebViewUIDelegate* webViewUIDelegate = [[CDVWKWebViewUIDelegate alloc] initWithTitle:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"]];
-    ((WKWebView*)self.webView).UIDelegate = webViewUIDelegate;
     
     [self.view addSubview:self.webView];
     [self.view sendSubviewToBack:self.webView];
     
     
     self.webView.navigationDelegate = self;
-    self.webView.UIDelegate = self;
+    self.webView.UIDelegate = self.webViewUIDelegate;
     self.webView.backgroundColor = [UIColor whiteColor];
     
     self.webView.clearsContextBeforeDrawing = YES;
@@ -607,6 +605,8 @@ BOOL isExiting = FALSE;
     self.webView.userInteractionEnabled = YES;
     self.automaticallyAdjustsScrollViewInsets = YES ;
     [self.webView setAutoresizingMask:UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth];
+    self.webView.allowsLinkPreview = NO;
+    self.webView.allowsBackForwardNavigationGestures = NO;
     
     
     self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
