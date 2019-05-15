@@ -102,6 +102,9 @@ public class ThemeableBrowser extends CordovaPlugin {
     private static final int TOOLBAR_DEF_HEIGHT = 44;
     private static final int DISABLED_ALPHA = 127;  // 50% AKA 127/255.
 
+    private static final int VISIBLE = 0;
+    private static final int INVISIBLE = 4;
+
     private static final String EVT_ERR = "ThemeableBrowserError";
     private static final String EVT_WRN = "ThemeableBrowserWarning";
     private static final String ERR_CRITICAL = "critical";
@@ -647,6 +650,9 @@ public class ThemeableBrowser extends CordovaPlugin {
 
                 if (back != null) {
                     back.setEnabled(features.backButtonCanClose);
+                    if(features.backButton != null && !features.backButton.showFirstTime) {
+                        back.setVisibility(INVISIBLE);
+                    }
                 }
 
                 // Forward button
@@ -666,6 +672,9 @@ public class ThemeableBrowser extends CordovaPlugin {
 
                 if (back != null) {
                     back.setEnabled(false);
+                    if(features.backButton != null && !features.backButton.showFirstTime) {
+                        back.setVisibility(INVISIBLE);
+                    }
                 }
 
 
@@ -756,6 +765,9 @@ public class ThemeableBrowser extends CordovaPlugin {
                     if (features.title.staticText != null) {
                         title.setText(features.title.staticText);
                     }
+                    if (features.title.size != 0) {
+                        title.setTextSize(features.title.size);
+                    }
                 }
 
                 // WebView
@@ -824,6 +836,14 @@ public class ThemeableBrowser extends CordovaPlugin {
 
                         if (back != null) {
                             back.setEnabled(canGoBack || features.backButtonCanClose);
+
+                            if(features.backButton != null && !features.backButton.showFirstTime) {
+                                if(canGoBack) {
+                                    back.setVisibility(VISIBLE);
+                                }else {
+                                    back.setVisibility(INVISIBLE);
+                                }
+                            }
                         }
 
                         if (forward != null) {
@@ -1538,10 +1558,12 @@ public class ThemeableBrowser extends CordovaPlugin {
         public String wwwImagePressed;
         public double wwwImageDensity = 1;
         public String align = ALIGN_LEFT;
+        public boolean showFirstTime = true;
     }
 
     private static class BrowserMenu extends BrowserButton {
         public EventLabel[] items;
+        public float size = 0;
     }
 
     private static class Toolbar {
