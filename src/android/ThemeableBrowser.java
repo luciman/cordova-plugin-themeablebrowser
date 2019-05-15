@@ -1578,5 +1578,6 @@ public class ThemeableBrowser extends CordovaPlugin {
         public String color;
         public String staticText;
         public boolean showPageTitle;
+        public float size = 0;
     }
 }
